@@ -23,17 +23,19 @@ Functions
  * @author Miu Vlad-Alexandru
  * @notice Creating raffle
  */
-
 pragma solidity 0.8.19;
 
-import {VRFConsumerBaseV2Plus} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
-import {VRFV2PlusClient} from "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
+import {VRFConsumerBaseV2Plus} from
+    "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/VRFConsumerBaseV2Plus.sol";
+import {VRFV2PlusClient} from
+    "../lib/chainlink-brownie-contracts/contracts/src/v0.8/vrf/dev/libraries/VRFV2PlusClient.sol";
 
 contract Raffle is VRFConsumerBaseV2Plus {
     /* Type declarations */
     enum RaffleState {
         OPEN, //0
         CALCULATING //1
+
     }
 
     /* State variables */
@@ -96,11 +98,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
      * @return upkeepNeeded - true if its time to restart the lottery
      * @return - ginored
      */
-    function checkUpKeep(
-        bytes memory
-    ) public view returns (bool upkeepNeeded, bytes memory /* performData */) {
-        bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >=
-            i_interval);
+    function checkUpKeep(bytes memory) public view returns (bool upkeepNeeded, bytes memory /* performData */ ) {
+        bool timeHasPassed = ((block.timestamp - s_lastTimeStamp) >= i_interval);
         bool isOpen = s_raffleState == RaffleState.OPEN;
         bool hasBalance = address(this).balance > 0;
         bool hasPlayers = s_players.length > 0;
@@ -111,8 +110,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function performUpkeep(bytes calldata) external {
         // Checks
         (bool upKeepNeeded,) = checkUpKeep("");
-        if(!upKeepNeeded){
-            revert Raffle__UpKeepNotNeeded(address(this).balance,s_players.length,s_raffleState);
+        if (!upKeepNeeded) {
+            revert Raffle__UpKeepNotNeeded(address(this).balance, s_players.length, s_raffleState);
         }
 
         // Effects (internal contract state)
@@ -124,19 +123,14 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 requestConfirmations: REQUEST_CONFIRMATIONS,
                 callbackGasLimit: i_callbackGasLimit,
                 numWords: NUM_WORDS,
-                extraArgs: VRFV2PlusClient._argsToBytes(
-                    VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
-                )
+                extraArgs: VRFV2PlusClient._argsToBytes(VRFV2PlusClient.ExtraArgsV1({nativePayment: false}))
             })
         );
         emit RequestedRaffleWinner(requestId);
     }
 
     // CEI: Checks, Effects, Interactcions gas efficient
-    function fulfillRandomWords(
-        uint256 requstId,
-        uint256[] calldata randomWords
-    ) internal override {
+    function fulfillRandomWords(uint256 requstId, uint256[] calldata randomWords) internal override {
         // Checks
 
         // Effects (internal contract state)
@@ -149,7 +143,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         emit WinnerPicked(s_recentWinner);
 
         //Interactions (external contract interactions)
-        (bool success, ) = recentWinner.call{value: address(this).balance}("");
+        (bool success,) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
         }
@@ -160,21 +154,20 @@ contract Raffle is VRFConsumerBaseV2Plus {
     function getEntrenceFee() external view returns (uint256) {
         return i_entranceFee;
     }
-    
-    function getRaffleState()public view returns(RaffleState){
+
+    function getRaffleState() public view returns (RaffleState) {
         return s_raffleState;
     }
 
-    function getPlayers() public view returns( address payable[] memory ){
+    function getPlayers() public view returns (address payable[] memory) {
         return s_players;
     }
 
-    function getLastTimestamp() public view returns(uint256){
+    function getLastTimestamp() public view returns (uint256) {
         return s_lastTimeStamp;
     }
 
-    function getRecentWinner() public view returns(address){
+    function getRecentWinner() public view returns (address) {
         return s_recentWinner;
     }
-
 }
